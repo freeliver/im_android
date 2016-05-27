@@ -55,7 +55,8 @@ public class MessageListActivity extends BaseActivity implements IMServiceObserv
 
 
     private static final long APPID = 7;
-    private static final long KEFU_ID = 55;
+    //private static final long KEFU_ID = 55; //test env
+    private static final long KEFU_ID = 62;
 
 
     private BaseAdapter adapter;
@@ -734,10 +735,17 @@ public class MessageListActivity extends BaseActivity implements IMServiceObserv
         Intent intent = new Intent(this, CustomerMessageActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("store_id", msg.storeID);
-        intent.putExtra("seller_id", msg.sellerID);
+        //intent.putExtra("seller_id", msg.sellerID);
+        //intent.putExtra("seller_id", (long)100060);
+
         intent.putExtra("app_id", APPID);
         intent.putExtra("current_uid", this.currentUID);
         intent.putExtra("peer_name", "客服");
+
+        intent.putExtra("goods_image", "http://api.gobelieve.io/images/7fac33c3e7410f29371a7b8114cd5cdd.png");
+        intent.putExtra("goods_url", "http://www.baidu.com");
+        intent.putExtra("goods_title", "百度");
+        intent.putExtra("goods_description", "取决于项目需求。如果Autosizing完全能满足开发需求，那么就没必要使用复杂的Autolayout。");
         startActivity(intent);
     }
 

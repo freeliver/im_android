@@ -28,6 +28,7 @@ public class IMessage {
     public static final String LINK = "link";
     public static final String ATTACHMENT = "attachment";
     public static final String TIMEBASE = "timebase";
+    public static final String GOODS = "goods";
 
     public static enum MessageType {
         MESSAGE_UNKNOWN,
@@ -38,6 +39,7 @@ public class IMessage {
         MESSAGE_GROUP_NOTIFICATION,
         MESSAGE_LINK,
         MESSAGE_ATTACHMENT,
+        MESSAGE_GOODS, //虚拟的消息，不会存入磁盘
         MESSAGE_TIME_BASE //虚拟的消息，不会存入磁盘
     }
 
@@ -240,6 +242,14 @@ public class IMessage {
         public MessageType getType() { return MessageType.MESSAGE_LINK; }
     }
 
+    public static class Goods extends MessageContent {
+        public String title;
+        public String content;
+        public String url;
+        public String image;
+        public MessageType getType() { return MessageType.MESSAGE_GOODS; }
+    }
+
     public static class Attachment extends MessageContent {
         public int msg_id;
         public String address;
@@ -268,6 +278,8 @@ public class IMessage {
                 content = gson.fromJson(element.get(ATTACHMENT), Attachment.class);
             } else if (element.has(LINK)) {
                 content = gson.fromJson(element.get(LINK), Link.class);
+            } else if (element.has(GOODS)) {
+                content = gson.fromJson(element.get(GOODS), Goods.class);
             } else {
                 content = new Unknown();
             }

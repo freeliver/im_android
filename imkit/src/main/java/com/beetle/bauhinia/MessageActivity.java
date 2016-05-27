@@ -284,6 +284,7 @@ public class MessageActivity extends BaseActivity implements
         public static int NOTIFICATION = 10;
         public static int LINK = 12;
         public static int TIMEBASE = 14;
+        public static int GOODS = 16;
     }
 
     class ChatAdapter extends BaseAdapter implements ContentTypes {
@@ -328,6 +329,8 @@ public class MessageActivity extends BaseActivity implements
                 media = TIMEBASE;
             } else if (msg.content instanceof IMessage.Link) {
                 media = LINK;
+            } else if (msg.content instanceof IMessage.Goods) {
+                media = GOODS;
             } else {
                 media = UNKNOWN;
             }
@@ -339,7 +342,7 @@ public class MessageActivity extends BaseActivity implements
 
         @Override
         public int getViewTypeCount() {
-            return 16;
+            return 18;
         }
 
         @Override
@@ -369,6 +372,9 @@ public class MessageActivity extends BaseActivity implements
                         break;
                     case MESSAGE_LINK:
                         rowView = new MessageLinkView(MessageActivity.this, !msg.isOutgoing, isShowUserName);
+                        break;
+                    case MESSAGE_GOODS:
+                        rowView = new MessageGoodsView(MessageActivity.this);
                         break;
                     default:
                         rowView = new MessageTextView(MessageActivity.this, !msg.isOutgoing, isShowUserName);
@@ -953,6 +959,12 @@ public class MessageActivity extends BaseActivity implements
             startActivity(MapActivity.newIntent(this, loc.longitude, loc.latitude));
         } else if (message.content.getType() == IMessage.MessageType.MESSAGE_LINK) {
             IMessage.Link link = (IMessage.Link)message.content;
+            Intent intent = new Intent();
+            intent.putExtra("url", link.url);
+            intent.setClass(this, WebActivity.class);
+            startActivity(intent);
+        } else if (message.content.getType() == IMessage.MessageType.MESSAGE_GOODS) {
+            IMessage.Goods link = (IMessage.Goods)message.content;
             Intent intent = new Intent();
             intent.putExtra("url", link.url);
             intent.setClass(this, WebActivity.class);

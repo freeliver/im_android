@@ -21,6 +21,7 @@ import com.beetle.bauhinia.db.MessageIterator;
 import com.beetle.bauhinia.tools.FileCache;
 import com.beetle.im.IMService;
 import com.beetle.im.IMServiceObserver;
+import com.google.gson.JsonObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -122,7 +123,26 @@ public class CustomerMessageActivity extends MessageActivity
         this.isShowUserName = intent.getBooleanExtra("show_name", false);
 
 
+        String goodsImage = intent.getStringExtra("goods_image");
+        String goodsTitle = intent.getStringExtra("goods_title");
+        String goodsDesc = intent.getStringExtra("goods_description");
+        String goodsURL = intent.getStringExtra("goods_url");
+
         this.loadConversationData();
+
+        if (!TextUtils.isEmpty(goodsImage) && !TextUtils.isEmpty(goodsTitle) &&
+                !TextUtils.isEmpty(goodsDesc) && !TextUtils.isEmpty(goodsURL)) {
+            IMessage goodsMsg = new IMessage();
+            JsonObject content = new JsonObject();
+            JsonObject goodsJson = new JsonObject();
+            goodsJson.addProperty("image", goodsImage);
+            goodsJson.addProperty("url", goodsURL);
+            goodsJson.addProperty("title", goodsTitle);
+            goodsJson.addProperty("content", goodsDesc);
+            content.add("goods", goodsJson);
+            goodsMsg.setContent(content.toString());
+            messages.add(goodsMsg);
+        }
         if (!TextUtils.isEmpty(peerName)) {
             titleView.setText(peerName);
         }
