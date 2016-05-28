@@ -4,7 +4,9 @@ package com.beetle.bauhinia.api;
 import com.beetle.bauhinia.api.body.PostDeviceToken;
 import com.beetle.bauhinia.api.types.Audio;
 import com.beetle.bauhinia.api.types.Image;
+import com.beetle.bauhinia.api.types.Translation;
 import com.google.gson.Gson;
+import com.google.gson.internal.ObjectConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -87,6 +89,9 @@ public class IMHttpAPI {
 
         @POST("/audios")
         Observable<Audio> postAudios(@Header("Content-Type") String contentType, @Body TypedFile file);
+
+        @GET("/translate")
+        Observable<Translation> translate(@Query("text") String text, @Query("to") String lan);
     };
 
 

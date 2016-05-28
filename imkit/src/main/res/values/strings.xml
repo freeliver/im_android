@@ -7,5 +7,5 @@
     <string name="im_btn_resend">重发</string>
     <string name="im_btn_copy">复制</string>
     <string name="im_btn_del">删除</string>
-
+    <string name="im_btn_translate">翻译</string>
 </resources>

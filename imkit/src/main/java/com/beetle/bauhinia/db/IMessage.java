@@ -104,6 +104,19 @@ public class IMessage {
         return attachment;
     }
 
+    public static Attachment newTranslationAttachment(int msgLocalID, String translation) {
+        Attachment attachment = new Attachment();
+        JsonObject content = new JsonObject();
+        JsonObject attachmentJson = new JsonObject();
+        attachmentJson.addProperty("msg_id", msgLocalID);
+        attachmentJson.addProperty("translation", translation);
+        content.add(ATTACHMENT, attachmentJson);
+        attachment.raw = content.toString();
+        attachment.translation = translation;
+        attachment.msg_id = msgLocalID;
+        return attachment;
+    }
+
     public static TimeBase newTimeBase(int timestamp) {
         TimeBase tb = new TimeBase();
         JsonObject content = new JsonObject();
@@ -253,6 +266,7 @@ public class IMessage {
     public static class Attachment extends MessageContent {
         public int msg_id;
         public String address;
+        public String translation;
 
         public MessageType getType() {
             return MessageType.MESSAGE_ATTACHMENT;
@@ -309,6 +323,7 @@ public class IMessage {
     private boolean playing;
     private boolean downloading;
     private boolean geocoding;
+    private String translation;//译文
 
     private PropertyChangeSupport changeSupport = new PropertyChangeSupport(
             this);
@@ -412,6 +427,14 @@ public class IMessage {
 
     public String getSenderAvatar() {
         return this.senderAvatar;
+    }
+
+    public String getTranslation() {
+        return this.translation;
+    }
+
+    public void setTranslation(String translation) {
+        this.translation = translation;
     }
 
 }

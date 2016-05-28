@@ -158,6 +158,7 @@ public class PeerMessageActivity extends MessageActivity implements
 
             if (msg.content.getType() == IMessage.MessageType.MESSAGE_ATTACHMENT) {
                 IMessage.Attachment attachment = (IMessage.Attachment)msg.content;
+                Log.i(TAG, "attachment:" + attachment.translation + "," + attachment.address);
                 attachments.put(attachment.msg_id, attachment);
             } else{
                 msg.isOutgoing = (msg.sender == currentUID);
@@ -310,6 +311,15 @@ public class PeerMessageActivity extends MessageActivity implements
     void saveMessageAttachment(IMessage msg, String address) {
         IMessage attachment = new IMessage();
         attachment.content = IMessage.newAttachment(msg.msgLocalID, address);
+        attachment.sender = msg.sender;
+        attachment.receiver = msg.receiver;
+        saveMessage(attachment);
+    }
+
+    @Override
+    void saveMessageTranslation(IMessage msg, String translation) {
+        IMessage attachment = new IMessage();
+        attachment.content = IMessage.newTranslationAttachment(msg.msgLocalID, translation);
         attachment.sender = msg.sender;
         attachment.receiver = msg.receiver;
         saveMessage(attachment);

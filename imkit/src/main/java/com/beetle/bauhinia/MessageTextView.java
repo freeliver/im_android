@@ -1,6 +1,7 @@
 package com.beetle.bauhinia;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -27,6 +28,10 @@ public class MessageTextView extends MessageRowView {
         if (mediaType == IMessage.MessageType.MESSAGE_TEXT) {
             TextView content = (TextView) findViewById(R.id.text);
             String text = ((IMessage.Text) msg.content).text;
+            if (!TextUtils.isEmpty(msg.getTranslation())) {
+                text += "\n";
+                text += msg.getTranslation();
+            }
             content.setText(text);
         } else {
             TextView content = (TextView) findViewById(R.id.text);

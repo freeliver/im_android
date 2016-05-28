@@ -33,6 +33,9 @@ import com.amap.api.services.geocoder.GeocodeSearch;
 import com.amap.api.services.geocoder.RegeocodeQuery;
 import com.amap.api.services.geocoder.RegeocodeResult;
 
+import com.beetle.bauhinia.api.IMHttpAPI;
+import com.beetle.bauhinia.api.types.Image;
+import com.beetle.bauhinia.api.types.Translation;
 import com.beetle.bauhinia.db.IMessage;
 import com.beetle.bauhinia.db.MessageIterator;
 import com.beetle.bauhinia.gallery.GalleryImage;
@@ -67,6 +70,9 @@ import com.beetle.bauhinia.activity.PhotoActivity;
 import com.beetle.bauhinia.ChatItemQuickAction.ChatQuickAction;
 import static com.beetle.bauhinia.constant.RequestCodes.*;
 import com.beetle.imkit.R;
+
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
 
 
 public class MessageActivity extends BaseActivity implements
@@ -404,6 +410,7 @@ public class MessageActivity extends BaseActivity implements
 
                             if (im.content.getType() == IMessage.MessageType.MESSAGE_TEXT) {
                                 actions.add(ChatItemQuickAction.ChatQuickAction.COPY);
+                                actions.add(ChatItemQuickAction.ChatQuickAction.TRANSLATE);
                             }
 
                             if (actions.size() == 0) {
@@ -425,6 +432,9 @@ public class MessageActivity extends BaseActivity implements
                                                     break;
                                                 case RESEND:
                                                     MessageActivity.this.resend(im);
+                                                    break;
+                                                case TRANSLATE:
+                                                    MessageActivity.this.translate(im);
                                                     break;
                                                 default:
                                                     break;
@@ -461,6 +471,30 @@ public class MessageActivity extends BaseActivity implements
         eraseMessageFailure(msg);
         msg.setFailure(false);
         this.sendMessage(msg);
+    }
+
+    void translate(final IMessage msg) {
+        IMessage.Text textContent = (IMessage.Text)msg.content;
+
+        IMHttpAPI.Singleton().translate(textContent.text, "en")
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<Translation>() {
+                    @Override
+                    public void call(Translation t) {
+                        Log.i(TAG, "translate reulst:" + t.translation);
+                        if (!TextUtils.isEmpty(t.translation)) {
+                            saveMessageTranslation(msg, t.translation);
+                            msg.setTranslation(t.translation);
+                            adapter.notifyDataSetChanged();
+                        }
+                    }
+                }, new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable throwable) {
+                        Log.i(TAG, "translate err:" + throwable);
+                    }
+                });;
+
     }
 
     private class VolumeTimerTask extends TimerTask {
@@ -696,6 +730,11 @@ public class MessageActivity extends BaseActivity implements
     void saveMessageAttachment(IMessage msg, String address) {
         Log.i(TAG, "not implemented");
     }
+
+    void saveMessageTranslation(IMessage msg, String translation) {
+        Log.i(TAG, "not implemented");
+    }
+
 
     void saveMessage(IMessage imsg) {
         Log.i(TAG, "not implemented");
@@ -1038,6 +1077,11 @@ public class MessageActivity extends BaseActivity implements
 
             if (TextUtils.isEmpty(loc.address)) {
                 queryLocation(msg);
+            }
+        } else if (msg.content.getType() == IMessage.MessageType.MESSAGE_TEXT) {
+            IMessage.Attachment attachment = attachments.get(msg.msgLocalID);
+            if (attachment != null) {
+                msg.setTranslation(attachment.translation);
             }
         }
     }
