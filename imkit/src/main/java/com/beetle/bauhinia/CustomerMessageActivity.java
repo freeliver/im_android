@@ -141,6 +141,7 @@ public class CustomerMessageActivity extends MessageActivity
             goodsJson.addProperty("content", goodsDesc);
             content.add("goods", goodsJson);
             goodsMsg.setContent(content.toString());
+            goodsMsg.timestamp = now();
             messages.add(goodsMsg);
         }
         if (!TextUtils.isEmpty(peerName)) {
