@@ -22,20 +22,27 @@ public class MessageTextView extends MessageRowView {
     @Override
     public void setMessage(IMessage msg, boolean incomming) {
         super.setMessage(msg, incomming);
-
         IMessage.MessageType mediaType = message.content.getType();
 
         if (mediaType == IMessage.MessageType.MESSAGE_TEXT) {
             TextView content = (TextView) findViewById(R.id.text);
             String text = ((IMessage.Text) msg.content).text;
-            if (!TextUtils.isEmpty(msg.getTranslation())) {
-                text += "\n";
-                text += msg.getTranslation();
-            }
             content.setText(text);
+
+            if (!TextUtils.isEmpty(msg.getTranslation())) {
+                TextView translationView = (TextView) findViewById(R.id.translation);
+                translationView.setVisibility(View.VISIBLE);
+                findViewById(R.id.divider).setVisibility(View.VISIBLE);
+                translationView.setText(msg.getTranslation());
+            } else {
+                findViewById(R.id.translation).setVisibility(View.GONE);
+                findViewById(R.id.divider).setVisibility(View.GONE);
+            }
         } else {
             TextView content = (TextView) findViewById(R.id.text);
             content.setText("unknown");
+            findViewById(R.id.translation).setVisibility(View.GONE);
+            findViewById(R.id.divider).setVisibility(View.GONE);
         }
         requestLayout();
     }
