@@ -475,8 +475,10 @@ public class MessageActivity extends BaseActivity implements
 
     void translate(final IMessage msg) {
         IMessage.Text textContent = (IMessage.Text)msg.content;
+        String lan = Locale.getDefault().getLanguage();
+        Log.i(TAG, "language:" + lan);
 
-        IMHttpAPI.Singleton().translate(textContent.text, "en")
+        IMHttpAPI.Singleton().translate(textContent.text, lan)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<Translation>() {
                     @Override
