@@ -51,6 +51,12 @@ public class CustomerMessageActivity extends MessageActivity
     protected long sellerID;
 
 
+    private String goodsTitle;
+    private String goodsDesc;
+    private String goodsURL;
+    private String goodsImage;
+
+
     public static class User {
         public long uid;
         public String name;
@@ -103,6 +109,58 @@ public class CustomerMessageActivity extends MessageActivity
         clearNotificationName = CLEAR_MESSAGES;
     }
 
+
+    private void sendGoodsMessage() {
+        if (!TextUtils.isEmpty(goodsImage) && !TextUtils.isEmpty(goodsTitle)) {
+            ICustomerMessage latest = null;
+            int i = this.messages.size();
+            for (; i > 0; i--) {
+                ICustomerMessage m = (ICustomerMessage) this.messages.get(i-1);
+                if (m.content.getType() == IMessage.MessageType.MESSAGE_GOODS) {
+                    latest = m;
+                    break;
+                }
+            }
+            //最近10分钟内询盘同一商品
+            if (latest != null) {
+                IMessage.Goods goodsContent = (IMessage.Goods)latest.content;
+
+                if (goodsContent.title.equals(goodsTitle) &&
+                        goodsContent.image.equals(goodsImage) &&
+                        now() - latest.timestamp < 10*60) {
+                    return;
+                }
+            }
+            ICustomerMessage goodsMsg = new ICustomerMessage();
+            goodsDesc = goodsDesc != null ?  goodsDesc : "";
+            goodsURL = goodsURL != null ? goodsURL : "";
+            IMessage.Goods goods = IMessage.newGoods(goodsTitle, goodsDesc, goodsURL, goodsImage);
+            goodsMsg.setContent(goods.getRaw());
+
+            goodsMsg.customerID = this.currentUID;
+            goodsMsg.customerAppID = this.appID;
+            goodsMsg.storeID = this.storeID;
+            goodsMsg.sellerID = this.sellerID;
+            goodsMsg.timestamp = now();
+            goodsMsg.isOutgoing = true;
+            saveMessage(goodsMsg);
+
+            //send message
+            CustomerMessage msg = new CustomerMessage();
+            msg.msgLocalID = goodsMsg.msgLocalID;
+            msg.customerAppID = goodsMsg.customerAppID;
+            msg.customerID = goodsMsg.customerID;
+            msg.storeID = goodsMsg.storeID;
+            msg.sellerID = goodsMsg.sellerID;
+            msg.content = goodsMsg.content.getRaw();
+
+            IMService im = IMService.getInstance();
+            im.sendCustomerMessage(msg);
+
+
+            messages.add(goodsMsg);
+        }
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -123,27 +181,14 @@ public class CustomerMessageActivity extends MessageActivity
         this.isShowUserName = intent.getBooleanExtra("show_name", false);
 
 
-        String goodsImage = intent.getStringExtra("goods_image");
-        String goodsTitle = intent.getStringExtra("goods_title");
-        String goodsDesc = intent.getStringExtra("goods_description");
-        String goodsURL = intent.getStringExtra("goods_url");
+        goodsImage = intent.getStringExtra("goods_image");
+        goodsTitle = intent.getStringExtra("goods_title");
+        goodsDesc = intent.getStringExtra("goods_description");
+        goodsURL = intent.getStringExtra("goods_url");
 
         this.loadConversationData();
 
-        if (!TextUtils.isEmpty(goodsImage) && !TextUtils.isEmpty(goodsTitle) &&
-                !TextUtils.isEmpty(goodsDesc) && !TextUtils.isEmpty(goodsURL)) {
-            IMessage goodsMsg = new IMessage();
-            JsonObject content = new JsonObject();
-            JsonObject goodsJson = new JsonObject();
-            goodsJson.addProperty("image", goodsImage);
-            goodsJson.addProperty("url", goodsURL);
-            goodsJson.addProperty("title", goodsTitle);
-            goodsJson.addProperty("content", goodsDesc);
-            content.add("goods", goodsJson);
-            goodsMsg.setContent(content.toString());
-            goodsMsg.timestamp = now();
-            messages.add(goodsMsg);
-        }
+
         if (!TextUtils.isEmpty(peerName)) {
             titleView.setText(peerName);
         }
@@ -202,6 +247,11 @@ public class CustomerMessageActivity extends MessageActivity
 
         downloadMessageContent(messages, count);
         checkMessageFailureFlag(messages, count);
+
+        sendGoodsMessage();
+
+
+
         resetMessageTimeBase();
     }
 

@@ -55,7 +55,7 @@ public class MessageListActivity extends BaseActivity implements IMServiceObserv
 
 
     private static final long APPID = 7;
-    //private static final long KEFU_ID = 55; //test env
+    //private static final long KEFU_ID = 91; //test env
     private static final long KEFU_ID = 62;
 
 
@@ -166,6 +166,8 @@ public class MessageListActivity extends BaseActivity implements IMServiceObserv
             return ((GroupNotification) content).description;
         } else if (content instanceof IMessage.Location) {
             return "一个地理位置";
+        } else if (content instanceof IMessage.Goods) {
+            return ((IMessage.Goods)content).title;
         } else {
             return content.getRaw();
         }

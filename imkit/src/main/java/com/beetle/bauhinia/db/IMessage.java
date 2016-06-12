@@ -172,6 +172,23 @@ public class IMessage {
         return notification;
     }
 
+    public static Goods newGoods(String title, String content, String url, String image) {
+        Goods goods = new Goods();
+        JsonObject jcontent = new JsonObject();
+        JsonObject goodsJson = new JsonObject();
+        goodsJson.addProperty("image", image);
+        goodsJson.addProperty("url", url);
+        goodsJson.addProperty("title", title);
+        goodsJson.addProperty("content", content);
+        jcontent.add(GOODS, goodsJson);
+        goods.raw = jcontent.toString();
+        goods.title = title;
+        goods.content = content;
+        goods.url = url;
+        goods.image = image;
+        return goods;
+    }
+
     public abstract static class MessageContent {
         public String raw;
 
