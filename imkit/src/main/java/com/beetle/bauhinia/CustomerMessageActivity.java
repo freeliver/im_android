@@ -155,8 +155,11 @@ public class CustomerMessageActivity extends MessageActivity
             msg.content = goodsMsg.content.getRaw();
 
             IMService im = IMService.getInstance();
-            im.sendCustomerMessage(msg);
-
+            boolean r = im.sendCustomerMessage(msg);
+            if (!r) {
+                markMessageFailure(goodsMsg);
+                goodsMsg.setFailure(true);
+            }
 
             messages.add(goodsMsg);
         }
