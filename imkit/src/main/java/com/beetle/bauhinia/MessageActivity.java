@@ -428,7 +428,13 @@ public class MessageActivity extends BaseActivity implements
                                                     ClipboardManager clipboard =
                                                             (ClipboardManager)MessageActivity.this
                                                                     .getSystemService(Context.CLIPBOARD_SERVICE);
-                                                    clipboard.setText(((IMessage.Text) im.content).text);
+                                                    String trans = im.getTranslation();
+                                                    if (!TextUtils.isEmpty(trans)) {
+                                                        String text = String.format("%s      %s", ((IMessage.Text) im.content).text, trans);
+                                                        clipboard.setText(text);
+                                                    } else {
+                                                        clipboard.setText(((IMessage.Text) im.content).text);
+                                                    }
                                                     break;
                                                 case RESEND:
                                                     MessageActivity.this.resend(im);
