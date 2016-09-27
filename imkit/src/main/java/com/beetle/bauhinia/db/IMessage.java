@@ -167,6 +167,12 @@ public class IMessage {
             notification.timestamp = obj.get("timestamp").getAsInt();
             notification.member = obj.get("member_id").getAsLong();
             notification.notificationType = GroupNotification.NOTIFICATION_GROUP_MEMBER_ADDED;
+        } else if (element.has("update_name")) {
+            JsonObject obj = element.getAsJsonObject("update_name");
+            notification.groupID = obj.get("group_id").getAsLong();
+            notification.groupName = obj.get("name").getAsString();
+            notification.timestamp = obj.get("timestamp").getAsInt();
+            notification.notificationType = GroupNotification.NOTIFICATION_GROUP_NAME_UPDATED;
         }
 
         return notification;
@@ -242,6 +248,7 @@ public class IMessage {
         public static final int NOTIFICATION_GROUP_DISBAND = 2;//群解散
         public static final int NOTIFICATION_GROUP_MEMBER_ADDED = 3;//群成员加入
         public static final int NOTIFICATION_GROUP_MEMBER_LEAVED = 4;//群成员离开
+        public static final int NOTIFICATION_GROUP_NAME_UPDATED = 5;
 
 
         public MessageType getType() {
@@ -414,6 +421,20 @@ public class IMessage {
             flags = flags & (~MessageFlag.MESSAGE_FLAG_ACK);
         }
         changeSupport.firePropertyChange("ack", old, ack);
+    }
+
+    public boolean isListened() {
+        return (flags & MessageFlag.MESSAGE_FLAG_LISTENED) != 0;
+    }
+
+    public void setListened(boolean listened) {
+        boolean old = isListened();
+        if (listened) {
+            flags = flags | MessageFlag.MESSAGE_FLAG_LISTENED;
+        } else {
+            flags = flags & (~MessageFlag.MESSAGE_FLAG_LISTENED);
+        }
+        changeSupport.firePropertyChange("listened", old, listened);
     }
 
     public boolean getGeocoding() {

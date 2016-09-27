@@ -29,7 +29,6 @@ import com.beetle.im.GroupMessageObserver;
 import com.beetle.im.IMMessage;
 import com.beetle.im.IMService;
 import com.beetle.im.IMServiceObserver;
-import com.beetle.im.LoginPoint;
 import com.beetle.bauhinia.activity.BaseActivity;
 import com.beetle.bauhinia.tools.Notification;
 
@@ -39,13 +38,12 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
-import com.beetle.im.LoginPointObserver;
 import com.beetle.im.PeerMessageObserver;
 import com.beetle.im.SystemMessageObserver;
 
 
-public class MessageListActivity extends BaseActivity implements IMServiceObserver, LoginPointObserver,
-        PeerMessageObserver, GroupMessageObserver, SystemMessageObserver, AdapterView.OnItemClickListener,
+public class MessageListActivity extends BaseActivity implements IMServiceObserver,
+         PeerMessageObserver, GroupMessageObserver, SystemMessageObserver, AdapterView.OnItemClickListener,
          NotificationCenter.NotificationCenterObserver {
     private static final String TAG = "beetle";
 
@@ -125,7 +123,6 @@ public class MessageListActivity extends BaseActivity implements IMServiceObserv
 
         IMService im =  IMService.getInstance();
         im.addObserver(this);
-        im.addLoginPointObserver(this);
         im.addPeerObserver(this);
         im.addGroupObserver(this);
         im.addSystemObserver(this);
@@ -145,7 +142,6 @@ public class MessageListActivity extends BaseActivity implements IMServiceObserv
         super.onDestroy();
         IMService im =  IMService.getInstance();
         im.removeObserver(this);
-        im.removeLoginPointObserver(this);
         im.removePeerObserver(this);
         im.removeGroupObserver(this);
         im.removeSystemObserver(this);
@@ -339,10 +335,6 @@ public class MessageListActivity extends BaseActivity implements IMServiceObserv
 
     @Override
     public void onConnectState(IMService.ConnectState state) {
-
-    }
-    @Override
-    public void onLoginPoint(LoginPoint lp) {
 
     }
     @Override
@@ -564,6 +556,8 @@ public class MessageListActivity extends BaseActivity implements IMServiceObserv
             } else {
                 notification.description = String.format("\"%s\"离开群", u.name);
             }
+        } else if (notification.notificationType == IMessage.GroupNotification.NOTIFICATION_GROUP_NAME_UPDATED) {
+            notification.description = String.format("群组改名为\"%s\"", notification.groupName);
         }
     }
 

@@ -55,7 +55,9 @@ import com.beetle.bauhinia.tools.NotificationCenter;
 import com.easemob.easeui.widget.EaseChatExtendMenu;
 import com.easemob.easeui.widget.EaseChatInputMenu;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -76,17 +78,12 @@ import rx.functions.Action1;
 
 
 public class MessageActivity extends BaseActivity implements
-
         SwipeRefreshLayout.OnRefreshListener {
 
     protected final String TAG = "imservice";
 
     private static final int IN_MSG = 0;
     private static final int OUT_MSG = 1;
-
-    protected String sendNotificationName;
-    protected String clearNotificationName;
-
 
 
     protected boolean isShowUserName = false;
@@ -118,10 +115,7 @@ public class MessageActivity extends BaseActivity implements
     AudioUtil audioUtil;
 
     ListView listview;
-    protected TextView titleView;
-    TextView subtitleView;
-    Toolbar toolbar;
-
+    
     static final int ITEM_TAKE_PICTURE = 1;
     static final int ITEM_PICTURE = 2;
     static final int ITEM_LOCATION = 3;
@@ -158,6 +152,60 @@ public class MessageActivity extends BaseActivity implements
         }
     }
 
+
+    public static class User {
+        public long uid;
+        public String name;
+        public String avatarURL;
+
+        //name为nil时，界面显示identifier字段
+        public String identifier;
+    }
+
+    protected User getUser(long uid) {
+        User u = new User();
+        u.uid = uid;
+        u.name = null;
+        u.avatarURL = "";
+        u.identifier = String.format("%d", uid);
+        return u;
+    }
+
+    public interface GetUserCallback {
+        void onUser(User u);
+    }
+
+    protected void asyncGetUser(long uid, GetUserCallback cb) {
+
+    }
+
+    //加载消息发送者的名称和头像信息
+    protected void loadUserName(IMessage msg) {
+        User u = getUser(msg.sender);
+
+        msg.setSenderAvatar(u.avatarURL);
+        if (TextUtils.isEmpty(u.name)) {
+            msg.setSenderName(u.identifier);
+            final IMessage fmsg = msg;
+            asyncGetUser(msg.sender, new GetUserCallback() {
+                @Override
+                public void onUser(User u) {
+                    fmsg.setSenderName(u.name);
+                    fmsg.setSenderAvatar(u.avatarURL);
+                }
+            });
+        } else {
+            msg.setSenderName(u.name);
+        }
+    }
+
+    protected void loadUserName(ArrayList<IMessage> messages, int count) {
+        for (int i = 0; i < messages.size(); i++) {
+            IMessage msg = messages.get(i);
+            loadUserName(msg);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -168,9 +216,6 @@ public class MessageActivity extends BaseActivity implements
         Log.i(TAG, "record file name:" + recordFileName);
 
         listview = (ListView)findViewById(R.id.list_view);
-        titleView = (TextView)findViewById(R.id.title);
-        subtitleView = (TextView)findViewById(R.id.subtitle);
-        toolbar = (Toolbar)findViewById(R.id.support_toolbar);
 
         extendMenuItemClickListener = new MyItemClickListener();
         inputMenu = (EaseChatInputMenu)findViewById(R.id.input_menu);
@@ -243,7 +288,7 @@ public class MessageActivity extends BaseActivity implements
 
 
         setSubtitle();
-        setSupportActionBar(toolbar);
+        //setSupportActionBar(toolbar);
 
         audioUtil = new AudioUtil(this);
         audioUtil.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -473,11 +518,6 @@ public class MessageActivity extends BaseActivity implements
         inputMenu.enableSend();
     }
 
-    void resend(IMessage msg) {
-        eraseMessageFailure(msg);
-        msg.setFailure(false);
-        this.sendMessage(msg);
-    }
 
     void translate(final IMessage msg) {
         IMessage.Text textContent = (IMessage.Text)msg.content;
@@ -710,12 +750,7 @@ public class MessageActivity extends BaseActivity implements
     }
 
     protected void setSubtitle(String subtitle) {
-        subtitleView.setText(subtitle);
-        if (subtitle.length() > 0) {
-            subtitleView.setVisibility(View.VISIBLE);
-        } else {
-            subtitleView.setVisibility(View.GONE);
-        }
+
     }
 
     @Override
@@ -731,7 +766,16 @@ public class MessageActivity extends BaseActivity implements
         return (int)(t/1000);
     }
 
-    void sendMessage(IMessage imsg) {
+    protected void markMessageListened(IMessage imsg) {
+        Log.i(TAG, "not implemented");
+    }
+
+
+    void saveMessageTranslation(IMessage msg, String translation) {
+        Log.i(TAG, "not implemented");
+    }
+
+    protected void resend(IMessage msg) {
         Log.i(TAG, "not implemented");
     }
 
@@ -739,20 +783,7 @@ public class MessageActivity extends BaseActivity implements
         Log.i(TAG, "not implemented");
     }
 
-    void saveMessageTranslation(IMessage msg, String translation) {
-        Log.i(TAG, "not implemented");
-    }
-
-
-    void saveMessage(IMessage imsg) {
-        Log.i(TAG, "not implemented");
-    }
-
-    void markMessageFailure(IMessage imsg) {
-        Log.i(TAG, "not implemented");
-    }
-
-    void eraseMessageFailure(IMessage imsg) {
+    protected void sendMessageContent(IMessage.MessageContent content) {
         Log.i(TAG, "not implemented");
     }
 
@@ -880,11 +911,89 @@ public class MessageActivity extends BaseActivity implements
         listview.smoothScrollToPosition(messages.size()-1);
     }
 
-    protected void sendTextMessage(String text) {}
-    protected void sendImageMessage(Bitmap bmp) {}
-    protected void sendAudioMessage() {}
-    protected void sendLocationMessage(float longitude, float latitude, String address) {}
 
+
+    protected void sendTextMessage(String text) {
+        if (text.length() == 0) {
+            return;
+        }
+
+        sendMessageContent(IMessage.newText(text));
+    }
+
+    protected void sendImageMessage(Bitmap bmp) {
+        double w = bmp.getWidth();
+        double h = bmp.getHeight();
+        double newHeight = 640.0;
+        double newWidth = newHeight*w/h;
+
+
+        Bitmap bigBMP = Bitmap.createScaledBitmap(bmp, (int)newWidth, (int)newHeight, true);
+
+        double sw = 256.0;
+        double sh = 256.0*h/w;
+
+        Bitmap thumbnail = Bitmap.createScaledBitmap(bmp, (int)sw, (int)sh, true);
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        bigBMP.compress(Bitmap.CompressFormat.JPEG, 100, os);
+        ByteArrayOutputStream os2 = new ByteArrayOutputStream();
+        thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, os2);
+
+        String originURL = localImageURL();
+        String thumbURL = localImageURL();
+        try {
+            FileCache.getInstance().storeByteArray(originURL, os);
+            FileCache.getInstance().storeByteArray(thumbURL, os2);
+
+            String path = FileCache.getInstance().getCachedFilePath(originURL);
+            String thumbPath = FileCache.getInstance().getCachedFilePath(thumbURL);
+
+            String tpath = path + "@256w_256h_0c";
+            File f = new File(thumbPath);
+            File t = new File(tpath);
+            f.renameTo(t);
+
+            sendMessageContent(IMessage.newImage("file:" + path));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    protected void sendAudioMessage() {
+        String tfile = audioRecorder.getPathName();
+
+        try {
+            long mduration = AudioUtil.getAudioDuration(tfile);
+
+            if (mduration < 1000) {
+                Toast.makeText(this, "录音时间太短了", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            long duration = mduration/1000;
+
+            String url = localAudioURL();
+
+            IMessage.Audio audio = IMessage.newAudio(url, duration);
+            FileInputStream is = new FileInputStream(new File(tfile));
+            Log.i(TAG, "store audio url:" + audio.url);
+            FileCache.getInstance().storeFile(audio.url, is);
+
+            sendMessageContent(audio);
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+            return;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+    }
+
+    protected void sendLocationMessage(float longitude, float latitude, String address) {
+        IMessage.Location loc = IMessage.newLocation(latitude, longitude);
+        loc.address = address;
+        sendMessageContent(loc);
+    }
 
     protected String localImageURL() {
         UUID uuid = UUID.randomUUID();
@@ -953,10 +1062,7 @@ public class MessageActivity extends BaseActivity implements
             Log.i(TAG, "invalide request code:" + requestCode);
             return;
         }
-
     }
-
-
 
     void play(IMessage message) {
         IMessage.Audio audio = (IMessage.Audio) message.content;
@@ -979,6 +1085,10 @@ public class MessageActivity extends BaseActivity implements
                     audioUtil.startPlay(FileCache.getInstance().getCachedFilePath(audio.url));
                     playingMessage = message;
                     message.setPlaying(true);
+                    if (!message.isListened() && !message.isOutgoing) {
+                        message.setListened(true);
+                        markMessageListened(message);
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
