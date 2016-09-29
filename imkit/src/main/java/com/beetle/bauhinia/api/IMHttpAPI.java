@@ -23,6 +23,7 @@ import retrofit.http.Multipart;
 import retrofit.http.POST;
 import retrofit.http.PUT;
 import retrofit.http.Part;
+import retrofit.http.Path;
 import retrofit.http.Query;
 import retrofit.mime.TypedFile;
 import rx.Observable;
@@ -76,6 +77,9 @@ public class IMHttpAPI {
         accessToken = token;
     }
 
+    public static class Notification {
+        public int quiet;//1 open, 0 close
+    }
 
     public interface IMHttp {
         @POST("/device/bind")
@@ -92,6 +96,9 @@ public class IMHttpAPI {
 
         @GET("/translate")
         Observable<Translation> translate(@Query("text") String text, @Query("to") String lan);
+
+        @POST("/notification/{gid}/users")
+        Observable<Object> setGroupNotification(@Path("gid") long groupId, @Body Notification notification);
     };
 
 
