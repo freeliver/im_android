@@ -97,7 +97,7 @@ public class IMHttpAPI {
         @GET("/translate")
         Observable<Translation> translate(@Query("text") String text, @Query("to") String lan);
 
-        @POST("/notification/{gid}/users")
+        @POST("/notification/groups/{gid}")
         Observable<Object> setGroupNotification(@Path("gid") long groupId, @Body Notification notification);
     };
 
