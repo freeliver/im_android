@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import com.beetle.bauhinia.db.GroupMessageDB;
 import com.beetle.bauhinia.db.IMessage;
+import com.beetle.bauhinia.db.MessageFlag;
 import com.beetle.bauhinia.db.MessageIterator;
 import com.beetle.bauhinia.db.PeerMessageDB;
 import com.beetle.bauhinia.tools.AudioDownloader;
@@ -37,6 +38,8 @@ public class GroupMessageActivity extends MessageActivity implements
         IMServiceObserver, GroupMessageObserver,
         AudioDownloader.AudioDownloaderObserver,
         GroupOutbox.OutboxObserver {
+
+    public static final int APPID = 7;
 
     public static final String SEND_MESSAGE_NAME = "send_group_message";
     public static final String CLEAR_MESSAGES = "clear_group_messages";
@@ -245,6 +248,9 @@ public class GroupMessageActivity extends MessageActivity implements
         imsg.receiverID = msg.getReceiverID();
         imsg.setContent(msg.content);
         imsg.isOutgoing = (msg.sender == this.currentUID);
+        if (imsg.isOutgoing) {
+            imsg.flags |= MessageFlag.MESSAGE_FLAG_ACK;
+        }
 
         if (!TextUtils.isEmpty(imsg.getUUID()) && findMessage(imsg.getUUID()) != null) {
             Log.i(TAG, "receive repeat message:" + imsg.getUUID());
@@ -295,7 +301,7 @@ public class GroupMessageActivity extends MessageActivity implements
         }
 
         IMessage imsg = new IMessage();
-        imsg.senderAppID = 0;
+        imsg.senderAppID = APPID;
         imsg.receiverAppID = 0;
         imsg.senderID = 0;
         imsg.receiverID = groupID;
@@ -388,9 +394,9 @@ public class GroupMessageActivity extends MessageActivity implements
     @Override
     protected void sendMessageContent(IMessage.MessageContent content) {
         IMessage imsg = new IMessage();
-        //todo assign appid
-        imsg.senderAppID = 0;
-        imsg.receiverAppID = 0;
+
+        //群组消息不需要设置receiverAppID
+        imsg.senderAppID = APPID;
         imsg.senderID = this.sender;
         imsg.receiverID = this.receiver;
         imsg.setContent(content);

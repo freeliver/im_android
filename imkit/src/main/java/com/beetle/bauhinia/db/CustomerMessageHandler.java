@@ -23,7 +23,6 @@ public class CustomerMessageHandler implements com.beetle.im.CustomerMessageHand
         imsg.storeID = msg.storeID;
         imsg.sellerID = msg.sellerID;
         imsg.isSupport = true;
-
         imsg.setContent(msg.content);
         boolean r = db.insertMessage(imsg, msg.storeID);
         msg.msgLocalID = imsg.msgLocalID;
@@ -41,7 +40,6 @@ public class CustomerMessageHandler implements com.beetle.im.CustomerMessageHand
         imsg.storeID = msg.storeID;
         imsg.sellerID = msg.sellerID;
         imsg.isSupport = false;
-
         imsg.setContent(msg.content);
         boolean r = db.insertMessage(imsg, msg.storeID);
         msg.msgLocalID = imsg.msgLocalID;

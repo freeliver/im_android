@@ -1,33 +1,22 @@
 package com.beetle.bauhinia;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.*;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.beetle.bauhinia.db.IMessage;
+import com.beetle.bauhinia.db.MessageFlag;
 import com.beetle.bauhinia.db.MessageIterator;
 import com.beetle.bauhinia.db.PeerMessageDB;
 import com.beetle.bauhinia.tools.AudioDownloader;
-import com.beetle.bauhinia.tools.AudioUtil;
 import com.beetle.bauhinia.tools.Notification;
 import com.beetle.bauhinia.tools.NotificationCenter;
 import com.beetle.bauhinia.tools.PeerOutbox;
 import com.beetle.im.*;
 
 import com.beetle.bauhinia.tools.FileCache;
-import com.beetle.im.Timer;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.*;
-
-
-import static android.os.SystemClock.uptimeMillis;
 
 
 public class PeerMessageActivity extends MessageActivity implements
@@ -35,19 +24,22 @@ public class PeerMessageActivity extends MessageActivity implements
         PeerOutbox.OutboxObserver
 {
 
+    public static final int APPID = 7;
+
     public static final String SEND_MESSAGE_NAME = "send_message";
     public static final String CLEAR_MESSAGES = "clear_messages";
     public static final String CLEAR_NEW_MESSAGES = "clear_new_messages";
 
     private final int PAGE_SIZE = 10;
 
-    protected long sender;
-    protected long receiver;
-
     protected long currentUID;
     protected long peerUID;
     protected String peerName;
+    protected int peerAppID;
 
+    private long getPeerID() {
+        return (peerAppID << 56)|peerUID;
+    }
 
 
     @Override
@@ -72,10 +64,13 @@ public class PeerMessageActivity extends MessageActivity implements
             return;
         }
 
-        Log.i(TAG, "local id:" + currentUID +  "peer id:" + peerUID);
+        peerAppID = intent.getIntExtra("peer_appid", 0);
+        if (peerAppID == 0) {
+            //设置成当前的APPID
+            peerAppID = APPID;
+        }
 
-        this.sender = currentUID;
-        this.receiver = peerUID;
+        Log.i(TAG, "local id:" + currentUID +  "peer id:" + peerUID);
 
         this.loadConversationData();
         getSupportActionBar().setTitle(peerName);
@@ -97,7 +92,7 @@ public class PeerMessageActivity extends MessageActivity implements
         Log.i(TAG, "peer message activity destory");
 
         NotificationCenter nc = NotificationCenter.defaultCenter();
-        Notification notification = new Notification(this.receiver, CLEAR_NEW_MESSAGES);
+        Notification notification = new Notification(getPeerID(), CLEAR_NEW_MESSAGES);
         nc.postNotification(notification);
 
         PeerOutbox.getInstance().removeObserver(this);
@@ -111,7 +106,7 @@ public class PeerMessageActivity extends MessageActivity implements
         messages = new ArrayList<IMessage>();
 
         int count = 0;
-        MessageIterator iter = PeerMessageDB.getInstance().newMessageIterator(peerUID);
+        MessageIterator iter = PeerMessageDB.getInstance().newMessageIterator(this.getPeerID());
         while (iter != null) {
             IMessage msg = iter.next();
             if (msg == null) {
@@ -171,7 +166,7 @@ public class PeerMessageActivity extends MessageActivity implements
         }
 
         int count = 0;
-        MessageIterator iter = PeerMessageDB.getInstance().newMessageIterator(peerUID, firstMsg.msgLocalID);
+        MessageIterator iter = PeerMessageDB.getInstance().newMessageIterator(this.getPeerID(), firstMsg.msgLocalID);
         while (iter != null) {
             IMessage msg = iter.next();
             if (msg == null) {
@@ -210,7 +205,7 @@ public class PeerMessageActivity extends MessageActivity implements
 
     @Override
     protected MessageIterator getMessageIterator() {
-        return PeerMessageDB.getInstance().newMessageIterator(peerUID);
+        return PeerMessageDB.getInstance().newMessageIterator(this.getPeerID());
     }
 
     public void onConnectState(IMService.ConnectState state) {
@@ -225,23 +220,12 @@ public class PeerMessageActivity extends MessageActivity implements
 
     @Override
     public void onPeerInputting(long uid) {
-        if (uid == peerUID) {
-            setSubtitle("对方正在输入");
-            Timer t = new Timer() {
-                @Override
-                protected void fire() {
-                    setSubtitle();
-                }
-            };
-            long start = uptimeMillis() + 10*1000;
-            t.setTimer(start);
-            t.resume();
-        }
+
     }
 
     @Override
     public void onPeerMessage(IMMessage msg) {
-        if (msg.sender != peerUID && msg.receiver != peerUID) {
+        if (msg.sender != this.getPeerID() && msg.receiver != this.getPeerID()) {
             return;
         }
         Log.i(TAG, "recv msg:" + msg.content);
@@ -255,7 +239,10 @@ public class PeerMessageActivity extends MessageActivity implements
         imsg.receiverID = msg.getReceiverID();
 
         imsg.setContent(msg.content);
-        imsg.isOutgoing = (msg.sender == this.currentUID);
+        imsg.isOutgoing = (imsg.senderID == this.currentUID);
+        if (imsg.isOutgoing) {
+            imsg.flags |= MessageFlag.MESSAGE_FLAG_ACK;
+        }
 
         if (!TextUtils.isEmpty(imsg.getUUID()) && findMessage(imsg.getUUID()) != null) {
             Log.i(TAG, "receive repeat message:" + imsg.getUUID());
@@ -269,7 +256,7 @@ public class PeerMessageActivity extends MessageActivity implements
 
     @Override
     public void onPeerMessageACK(int msgLocalID, long uid) {
-        if (peerUID != uid) {
+        if (this.getPeerID() != uid) {
             return;
         }
         Log.i(TAG, "message ack");
@@ -284,7 +271,7 @@ public class PeerMessageActivity extends MessageActivity implements
 
     @Override
     public void onPeerMessageFailure(int msgLocalID, long uid) {
-        if (peerUID != uid) {
+        if (this.getPeerID() != uid) {
             return;
         }
         Log.i(TAG, "message failure");
@@ -309,7 +296,7 @@ public class PeerMessageActivity extends MessageActivity implements
             if (!msg.isAck() &&
                     !msg.isFailure() &&
                     !msg.getUploading() &&
-                    !IMService.getInstance().isPeerMessageSending(peerUID, msg.msgLocalID)) {
+                    !IMService.getInstance().isPeerMessageSending(this.getPeerID(), msg.msgLocalID)) {
                 markMessageFailure(msg);
                 msg.setFailure(true);
             }
@@ -409,11 +396,11 @@ public class PeerMessageActivity extends MessageActivity implements
         super.clearConversation();
 
         PeerMessageDB db = PeerMessageDB.getInstance();
-        db.clearCoversation(this.peerUID);
+        db.clearCoversation(this.getPeerID());
 
 
         NotificationCenter nc = NotificationCenter.defaultCenter();
-        Notification notification = new Notification(this.receiver, CLEAR_MESSAGES);
+        Notification notification = new Notification(this.getPeerID(), CLEAR_MESSAGES);
         nc.postNotification(notification);
 
     }
@@ -421,7 +408,7 @@ public class PeerMessageActivity extends MessageActivity implements
     @Override
     public void onAudioUploadSuccess(IMessage imsg, String url) {
         Log.i(TAG, "audio upload success:" + url);
-        if (imsg.receiverID == this.peerUID) {
+        if (imsg.getReceiver() == this.getPeerID()) {
             IMessage m = findMessage(imsg.msgLocalID);
             if (m != null) {
                 m.setUploading(false);
@@ -432,7 +419,7 @@ public class PeerMessageActivity extends MessageActivity implements
     @Override
     public void onAudioUploadFail(IMessage msg) {
         Log.i(TAG, "audio upload fail");
-        if (msg.receiverID == this.peerUID) {
+        if (msg.getReceiver() == this.getPeerID()) {
             IMessage m = findMessage(msg.msgLocalID);
             if (m != null) {
                 m.setFailure(true);
@@ -444,7 +431,7 @@ public class PeerMessageActivity extends MessageActivity implements
     @Override
     public void onImageUploadSuccess(IMessage msg, String url) {
         Log.i(TAG, "image upload success:" + url);
-        if (msg.receiverID == this.peerUID) {
+        if (msg.getReceiver() == this.getPeerID()) {
             IMessage m = findMessage(msg.msgLocalID);
             if (m != null) {
                 m.setUploading(false);
@@ -455,7 +442,7 @@ public class PeerMessageActivity extends MessageActivity implements
     @Override
     public void onImageUploadFail(IMessage msg) {
         Log.i(TAG, "image upload fail");
-        if (msg.receiverID == this.peerUID) {
+        if (msg.getReceiver() == this.getPeerID()) {
             IMessage m = findMessage(msg.msgLocalID);
             if (m != null) {
                 m.setFailure(true);
@@ -476,11 +463,10 @@ public class PeerMessageActivity extends MessageActivity implements
 
     protected void sendMessageContent(IMessage.MessageContent content) {
         IMessage imsg = new IMessage();
-        //todo assign appid
-        imsg.senderAppID = 0;
-        imsg.receiverAppID = 0;
-        imsg.senderID = this.sender;
-        imsg.receiverID = this.receiver;
+        imsg.senderAppID = APPID;
+        imsg.receiverAppID = peerAppID;
+        imsg.senderID = this.currentUID;
+        imsg.receiverID = this.peerUID;
         imsg.setContent(content);
         imsg.timestamp = now();
         imsg.isOutgoing = true;

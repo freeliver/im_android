@@ -22,6 +22,17 @@ public class GroupMessageHandler implements com.beetle.im.GroupMessageHandler {
         return (int)(t/1000);
     }
 
+    //当前用户id
+    private long uid;
+    private int appID;
+
+    public void setAppID(int appID) {
+        this.appID = appID;
+    }
+    public void setUID(long uid) {
+        this.uid = uid;
+    }
+
     public boolean handleMessage(IMMessage msg) {
         GroupMessageDB db = GroupMessageDB.getInstance();
         IMessage imsg = new IMessage();
@@ -29,6 +40,9 @@ public class GroupMessageHandler implements com.beetle.im.GroupMessageHandler {
         imsg.receiverID = msg.getReceiverID();
         imsg.timestamp = msg.timestamp;
         imsg.setContent(msg.content);
+        if (msg.getSenderID() == this.uid && msg.getSenderAppID() == this.appID) {
+            imsg.flags = MessageFlag.MESSAGE_FLAG_ACK;
+        }
         boolean r = db.insertMessage(imsg, imsg.getReceiver());
         msg.msgLocalID = imsg.msgLocalID;
         return r;
@@ -48,10 +62,8 @@ public class GroupMessageHandler implements com.beetle.im.GroupMessageHandler {
         GroupMessageDB db = GroupMessageDB.getInstance();
         IMessage.GroupNotification groupNotification = IMessage.newGroupNotification(notification);
         IMessage imsg = new IMessage();
-
-        //todo assign appid
-        imsg.senderAppID = 0;
-        imsg.receiverAppID = 0;
+        imsg.senderAppID = this.appID;
+        imsg.receiverAppID = this.appID;
         imsg.senderID = 0;
         imsg.receiverID = groupNotification.groupID;
         imsg.timestamp = groupNotification.timestamp;
