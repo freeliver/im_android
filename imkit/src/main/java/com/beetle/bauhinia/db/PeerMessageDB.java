@@ -152,18 +152,10 @@ public class PeerMessageDB extends MessageDB {
             pos += 4;
 
 
-            long sender = BytePacket.readInt64(buf, pos);
-            msg.senderAppID = (int)(sender >> 56);
-            msg.senderID = sender&0x00ffffffffffffffL;
+            BytePacket.writeInt64(msg.getSender(), buf, pos);
             pos += 8;
-
-            long receiver = BytePacket.readInt64(buf, pos);
-            msg.receiverAppID = (int)(receiver >> 56);
-            msg.receiverID = receiver&0x00ffffffffffffffL;
+            BytePacket.writeInt64(msg.getReceiver(), buf, pos);
             pos += 8;
-
-
-
 
 
             System.arraycopy(content, 0, buf, pos, content.length);

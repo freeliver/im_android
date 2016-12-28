@@ -54,6 +54,12 @@ public class GroupMessageActivity extends MessageActivity implements
     protected long groupID;
     protected String groupName;
 
+    private long getCurrentID() {
+        long appid = APPID;
+        return (appid << 56) | currentUID;
+    }
+
+
     public GroupMessageActivity() {
         super();
         isShowUserName = true;
@@ -141,7 +147,7 @@ public class GroupMessageActivity extends MessageActivity implements
                 attachments.put(attachment.msg_id, attachment);
             } else {
                 updateNotificationDesc(msg);
-                msg.isOutgoing = (msg.senderID == currentUID);
+                msg.isOutgoing = (msg.getSender() == this.getCurrentID());
                 messages.add(0, msg);
                 if (++count >= PAGE_SIZE) {
                     break;
@@ -201,7 +207,7 @@ public class GroupMessageActivity extends MessageActivity implements
                 attachments.put(attachment.msg_id, attachment);
             } else {
                 updateNotificationDesc(msg);
-                msg.isOutgoing = (msg.senderID == currentUID);
+                msg.isOutgoing = (msg.getSender() == this.getCurrentID());
                 messages.add(0, msg);
                 if (++count >= PAGE_SIZE) {
                     break;
@@ -247,7 +253,7 @@ public class GroupMessageActivity extends MessageActivity implements
         imsg.senderID = msg.getSenderID();
         imsg.receiverID = msg.getReceiverID();
         imsg.setContent(msg.content);
-        imsg.isOutgoing = (msg.sender == this.currentUID);
+        imsg.isOutgoing = (imsg.getSender() == this.getCurrentID());
         if (imsg.isOutgoing) {
             imsg.flags |= MessageFlag.MESSAGE_FLAG_ACK;
         }
@@ -475,7 +481,7 @@ public class GroupMessageActivity extends MessageActivity implements
 
     void markMessageFailure(IMessage imsg) {
         long cid = 0;
-        if (imsg.senderID == this.currentUID) {
+        if (imsg.getSender() == this.getCurrentID()) {
             cid = imsg.getReceiver();
         } else {
             cid = imsg.getSender();
@@ -485,7 +491,7 @@ public class GroupMessageActivity extends MessageActivity implements
 
     void eraseMessageFailure(IMessage imsg) {
         long cid = 0;
-        if (imsg.senderID == this.currentUID) {
+        if (imsg.getSender() == this.getCurrentID()) {
             cid = imsg.getReceiver();
         } else {
             cid = imsg.getSender();
