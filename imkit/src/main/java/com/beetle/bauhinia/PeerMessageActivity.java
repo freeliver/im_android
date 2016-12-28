@@ -131,7 +131,7 @@ public class PeerMessageActivity extends MessageActivity implements
                 IMessage.Attachment attachment = (IMessage.Attachment)msg.content;
                 attachments.put(attachment.msg_id, attachment);
             } else {
-                msg.isOutgoing = (msg.sender == currentUID);
+                msg.isOutgoing = (msg.senderID == currentUID);
                 messages.add(0, msg);
                 if (++count >= PAGE_SIZE) {
                     break;
@@ -191,7 +191,7 @@ public class PeerMessageActivity extends MessageActivity implements
                 IMessage.Attachment attachment = (IMessage.Attachment)msg.content;
                 attachments.put(attachment.msg_id, attachment);
             } else{
-                msg.isOutgoing = (msg.sender == currentUID);
+                msg.isOutgoing = (msg.senderID == currentUID);
                 messages.add(0, msg);
                 if (++count >= PAGE_SIZE) {
                     break;
@@ -248,8 +248,12 @@ public class PeerMessageActivity extends MessageActivity implements
         final IMessage imsg = new IMessage();
         imsg.timestamp = msg.timestamp;
         imsg.msgLocalID = msg.msgLocalID;
-        imsg.sender = msg.sender;
-        imsg.receiver = msg.receiver;
+
+        imsg.senderAppID = msg.getSenderAppID();
+        imsg.receiverAppID = msg.getReceiverAppID();
+        imsg.senderID = msg.getSenderID();
+        imsg.receiverID = msg.getReceiverID();
+
         imsg.setContent(msg.content);
         imsg.isOutgoing = (msg.sender == this.currentUID);
 
@@ -296,7 +300,7 @@ public class PeerMessageActivity extends MessageActivity implements
 
 
     void checkMessageFailureFlag(IMessage msg) {
-        if (msg.sender == this.currentUID) {
+        if (msg.senderID == this.currentUID) {
             if (msg.content.getType() == IMessage.MessageType.MESSAGE_AUDIO) {
                 msg.setUploading(PeerOutbox.getInstance().isUploading(msg));
             } else if (msg.content.getType() == IMessage.MessageType.MESSAGE_IMAGE) {
@@ -341,8 +345,8 @@ public class PeerMessageActivity extends MessageActivity implements
             PeerOutbox.getInstance().uploadImage(imsg, path);
         } else {
             IMMessage msg = new IMMessage();
-            msg.sender = imsg.sender;
-            msg.receiver = imsg.receiver;
+            msg.sender = imsg.getSender();
+            msg.receiver = imsg.getReceiver();
             msg.content = imsg.content.getRaw();
             msg.msgLocalID = imsg.msgLocalID;
             IMService im = IMService.getInstance();
@@ -354,46 +358,48 @@ public class PeerMessageActivity extends MessageActivity implements
     void saveMessageAttachment(IMessage msg, String address) {
         IMessage attachment = new IMessage();
         attachment.content = IMessage.newAttachment(msg.msgLocalID, address);
-        attachment.sender = msg.sender;
-        attachment.receiver = msg.receiver;
+        attachment.senderID = msg.senderID;
+        attachment.receiverID = msg.receiverID;
+        attachment.senderAppID = msg.senderAppID;
+        attachment.receiverAppID = msg.receiverAppID;
         saveMessage(attachment);
     }
 
     void saveMessage(IMessage imsg) {
-        if (imsg.sender == this.currentUID) {
-            PeerMessageDB.getInstance().insertMessage(imsg, imsg.receiver);
+        if (imsg.senderID == this.currentUID) {
+            PeerMessageDB.getInstance().insertMessage(imsg, imsg.getReceiver());
         } else {
-            PeerMessageDB.getInstance().insertMessage(imsg, imsg.sender);
+            PeerMessageDB.getInstance().insertMessage(imsg, imsg.getSender());
         }
     }
 
     @Override
     protected void markMessageListened(IMessage imsg) {
         long cid = 0;
-        if (imsg.sender == this.currentUID) {
-            cid = imsg.receiver;
+        if (imsg.senderID == this.currentUID) {
+            cid = imsg.getReceiver();
         } else {
-            cid = imsg.sender;
+            cid = imsg.getSender();
         }
         PeerMessageDB.getInstance().markMessageListened(imsg.msgLocalID, cid);
     }
 
     void markMessageFailure(IMessage imsg) {
         long cid = 0;
-        if (imsg.sender == this.currentUID) {
-            cid = imsg.receiver;
+        if (imsg.senderID == this.currentUID) {
+            cid = imsg.getReceiver();
         } else {
-            cid = imsg.sender;
+            cid = imsg.getSender();
         }
         PeerMessageDB.getInstance().markMessageFailure(imsg.msgLocalID, cid);
     }
 
     void eraseMessageFailure(IMessage imsg) {
         long cid = 0;
-        if (imsg.sender == this.currentUID) {
-            cid = imsg.receiver;
+        if (imsg.senderID == this.currentUID) {
+            cid = imsg.getReceiver();
         } else {
-            cid = imsg.sender;
+            cid = imsg.getSender();
         }
         PeerMessageDB.getInstance().eraseMessageFailure(imsg.msgLocalID, cid);
     }
@@ -415,7 +421,7 @@ public class PeerMessageActivity extends MessageActivity implements
     @Override
     public void onAudioUploadSuccess(IMessage imsg, String url) {
         Log.i(TAG, "audio upload success:" + url);
-        if (imsg.receiver == this.peerUID) {
+        if (imsg.receiverID == this.peerUID) {
             IMessage m = findMessage(imsg.msgLocalID);
             if (m != null) {
                 m.setUploading(false);
@@ -426,7 +432,7 @@ public class PeerMessageActivity extends MessageActivity implements
     @Override
     public void onAudioUploadFail(IMessage msg) {
         Log.i(TAG, "audio upload fail");
-        if (msg.receiver == this.peerUID) {
+        if (msg.receiverID == this.peerUID) {
             IMessage m = findMessage(msg.msgLocalID);
             if (m != null) {
                 m.setFailure(true);
@@ -438,7 +444,7 @@ public class PeerMessageActivity extends MessageActivity implements
     @Override
     public void onImageUploadSuccess(IMessage msg, String url) {
         Log.i(TAG, "image upload success:" + url);
-        if (msg.receiver == this.peerUID) {
+        if (msg.receiverID == this.peerUID) {
             IMessage m = findMessage(msg.msgLocalID);
             if (m != null) {
                 m.setUploading(false);
@@ -449,7 +455,7 @@ public class PeerMessageActivity extends MessageActivity implements
     @Override
     public void onImageUploadFail(IMessage msg) {
         Log.i(TAG, "image upload fail");
-        if (msg.receiver == this.peerUID) {
+        if (msg.receiverID == this.peerUID) {
             IMessage m = findMessage(msg.msgLocalID);
             if (m != null) {
                 m.setFailure(true);
@@ -470,8 +476,11 @@ public class PeerMessageActivity extends MessageActivity implements
 
     protected void sendMessageContent(IMessage.MessageContent content) {
         IMessage imsg = new IMessage();
-        imsg.sender = this.sender;
-        imsg.receiver = this.receiver;
+        //todo assign appid
+        imsg.senderAppID = 0;
+        imsg.receiverAppID = 0;
+        imsg.senderID = this.sender;
+        imsg.receiverID = this.receiver;
         imsg.setContent(content);
         imsg.timestamp = now();
         imsg.isOutgoing = true;

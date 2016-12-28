@@ -377,8 +377,21 @@ public class IMessage {
 
     public int msgLocalID;
     public int flags;
-    public long sender;
-    public long receiver;
+
+    public long getSender() {
+        return (senderID | (long)senderAppID<<56);
+    }
+
+    public long getReceiver() {
+        return (receiverID | (long)receiverAppID<<56);
+    }
+
+    //应用内uid
+    public long senderID;
+    public long receiverID;
+    public int senderAppID;
+    public int receiverAppID;
+
     public MessageContent content;
     public int timestamp;//单位秒
 

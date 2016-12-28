@@ -260,8 +260,6 @@ public class MessageListActivity extends BaseActivity implements IMServiceObserv
             msg.sellerID = 0;
 
             msg.content = IMessage.newText("如果你在使用过程中有任何问题和建议，记得给我们发信反馈哦");
-            msg.sender = 0;
-            msg.receiver = this.currentUID;
             msg.timestamp = now();
         }
         Conversation conv = new Conversation();
@@ -344,8 +342,10 @@ public class MessageListActivity extends BaseActivity implements IMServiceObserv
         IMessage imsg = new IMessage();
         imsg.timestamp = now();
         imsg.msgLocalID = msg.msgLocalID;
-        imsg.sender = msg.sender;
-        imsg.receiver = msg.receiver;
+        imsg.senderAppID = msg.getSenderAppID();
+        imsg.receiverAppID = msg.getReceiverAppID();
+        imsg.senderID = msg.getSenderID();
+        imsg.receiverID = msg.getReceiverID();
         imsg.setContent(msg.content);
 
         long cid = 0;
@@ -435,8 +435,10 @@ public class MessageListActivity extends BaseActivity implements IMServiceObserv
         IMessage imsg = new IMessage();
         imsg.timestamp = msg.timestamp;
         imsg.msgLocalID = msg.msgLocalID;
-        imsg.sender = msg.sender;
-        imsg.receiver = msg.receiver;
+        imsg.senderAppID = msg.getSenderAppID();
+        imsg.receiverAppID = msg.getReceiverAppID();
+        imsg.senderID = msg.getSenderID();
+        imsg.receiverID = msg.getReceiverID();
         imsg.setContent(msg.content);
 
         int pos = findConversationPosition(msg.receiver, Conversation.CONVERSATION_GROUP);
@@ -475,8 +477,8 @@ public class MessageListActivity extends BaseActivity implements IMServiceObserv
     public void onGroupNotification(String text) {
         GroupNotification groupNotification = IMessage.newGroupNotification(text);
         IMessage imsg = new IMessage();
-        imsg.sender = 0;
-        imsg.receiver = groupNotification.groupID;
+        imsg.senderID = 0;
+        imsg.receiverID = groupNotification.groupID;
         imsg.timestamp = groupNotification.timestamp;
         imsg.setContent(groupNotification);
         int pos = findConversationPosition(groupNotification.groupID, Conversation.CONVERSATION_GROUP);
@@ -563,10 +565,10 @@ public class MessageListActivity extends BaseActivity implements IMServiceObserv
         if (notification.name.equals(PeerMessageActivity.SEND_MESSAGE_NAME)) {
             IMessage imsg = (IMessage) notification.obj;
 
-            int pos = findConversationPosition(imsg.receiver, Conversation.CONVERSATION_PEER);
+            int pos = findConversationPosition(imsg.getReceiver(), Conversation.CONVERSATION_PEER);
             Conversation conversation = null;
             if (pos == -1) {
-                conversation = newPeerConversation(imsg.receiver);
+                conversation = newPeerConversation(imsg.getReceiver());
             } else {
                 conversation = conversations.get(pos);
             }
@@ -594,10 +596,10 @@ public class MessageListActivity extends BaseActivity implements IMServiceObserv
             }
         } else if (notification.name.equals(GroupMessageActivity.SEND_MESSAGE_NAME)) {
             IMessage imsg = (IMessage) notification.obj;
-            int pos = findConversationPosition(imsg.receiver, Conversation.CONVERSATION_GROUP);
+            int pos = findConversationPosition(imsg.getReceiver(), Conversation.CONVERSATION_GROUP);
             Conversation conversation = null;
             if (pos == -1) {
-                conversation = newGroupConversation(imsg.receiver);
+                conversation = newGroupConversation(imsg.getReceiver());
             } else {
                 conversation = conversations.get(pos);
             }

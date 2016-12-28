@@ -175,13 +175,13 @@ public class MessageActivity extends BaseActivity implements
 
     //加载消息发送者的名称和头像信息
     protected void loadUserName(IMessage msg) {
-        User u = getUser(msg.sender);
+        User u = getUser(msg.getSender());
 
         msg.setSenderAvatar(u.avatarURL);
         if (TextUtils.isEmpty(u.name)) {
             msg.setSenderName(u.identifier);
             final IMessage fmsg = msg;
-            asyncGetUser(msg.sender, new GetUserCallback() {
+            asyncGetUser(msg.getSender(), new GetUserCallback() {
                 @Override
                 public void onUser(User u) {
                     fmsg.setSenderName(u.name);

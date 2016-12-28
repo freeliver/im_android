@@ -149,9 +149,9 @@ public class GroupMessageDB extends MessageDB {
             pos += 4;
             BytePacket.writeInt32(msg.timestamp, buf, pos);
             pos += 4;
-            BytePacket.writeInt64(msg.sender, buf, pos);
+            BytePacket.writeInt64(msg.getSender(), buf, pos);
             pos += 8;
-            BytePacket.writeInt64(msg.receiver, buf, pos);
+            BytePacket.writeInt64(msg.getReceiver(), buf, pos);
             pos += 8;
             System.arraycopy(content, 0, buf, pos, content.length);
             pos += content.length;
@@ -196,10 +196,19 @@ public class GroupMessageDB extends MessageDB {
             pos += 4;
             msg.timestamp = BytePacket.readInt32(buf, pos);
             pos += 4;
-            msg.sender = BytePacket.readInt64(buf, pos);
+
+
+            long sender = BytePacket.readInt64(buf, pos);
+            msg.senderAppID = (int)(sender >> 56);
+            msg.senderID = sender&0x00ffffffffffffffL;
             pos += 8;
-            msg.receiver = BytePacket.readInt64(buf, pos);
+
+            long receiver = BytePacket.readInt64(buf, pos);
+            msg.receiverAppID = (int)(receiver >> 56);
+            msg.receiverID = receiver&0x00ffffffffffffffL;
             pos += 8;
+
+
             msg.setContent(new String(buf, pos, len - 24, "UTF-8"));
             return msg;
         } catch (Exception e) {

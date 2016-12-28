@@ -18,7 +18,7 @@ public class CustomerOutbox extends Outbox {
 
     @Override
     protected void markMessageFailure(IMessage msg) {
-        CustomerMessageDB.getInstance().markMessageFailure(msg.msgLocalID, msg.receiver);
+        CustomerMessageDB.getInstance().markMessageFailure(msg.msgLocalID, msg.getReceiver());
     }
 
     @Override

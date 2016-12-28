@@ -25,11 +25,11 @@ public class GroupMessageHandler implements com.beetle.im.GroupMessageHandler {
     public boolean handleMessage(IMMessage msg) {
         GroupMessageDB db = GroupMessageDB.getInstance();
         IMessage imsg = new IMessage();
-        imsg.sender = msg.sender;
-        imsg.receiver = msg.receiver;
+        imsg.senderID = msg.getSenderID();
+        imsg.receiverID = msg.getReceiverID();
         imsg.timestamp = msg.timestamp;
         imsg.setContent(msg.content);
-        boolean r = db.insertMessage(imsg, imsg.receiver);
+        boolean r = db.insertMessage(imsg, imsg.getReceiver());
         msg.msgLocalID = imsg.msgLocalID;
         return r;
 
@@ -48,8 +48,12 @@ public class GroupMessageHandler implements com.beetle.im.GroupMessageHandler {
         GroupMessageDB db = GroupMessageDB.getInstance();
         IMessage.GroupNotification groupNotification = IMessage.newGroupNotification(notification);
         IMessage imsg = new IMessage();
-        imsg.sender = 0;
-        imsg.receiver = groupNotification.groupID;
+
+        //todo assign appid
+        imsg.senderAppID = 0;
+        imsg.receiverAppID = 0;
+        imsg.senderID = 0;
+        imsg.receiverID = groupNotification.groupID;
         imsg.timestamp = groupNotification.timestamp;
         imsg.setContent(groupNotification);
         return db.insertMessage(imsg, groupNotification.groupID);

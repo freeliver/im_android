@@ -146,8 +146,7 @@ public class XWCustomerMessageActivity extends CustomerMessageActivity implement
                         msg.sellerID = sellerID;
 
                         msg.timestamp = now();
-                        msg.sender = storeID;
-                        msg.receiver = currentUID;
+
 
                         msg.isSupport = true;
                         msg.isOutgoing = false;

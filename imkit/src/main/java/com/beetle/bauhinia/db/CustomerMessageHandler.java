@@ -22,8 +22,6 @@ public class CustomerMessageHandler implements com.beetle.im.CustomerMessageHand
         imsg.customerID = msg.customerID;
         imsg.storeID = msg.storeID;
         imsg.sellerID = msg.sellerID;
-        imsg.sender = msg.customerID;
-        imsg.receiver = msg.storeID;
         imsg.isSupport = true;
 
         imsg.setContent(msg.content);
@@ -42,8 +40,6 @@ public class CustomerMessageHandler implements com.beetle.im.CustomerMessageHand
         imsg.customerID = msg.customerID;
         imsg.storeID = msg.storeID;
         imsg.sellerID = msg.sellerID;
-        imsg.sender = msg.customerID;
-        imsg.receiver = msg.storeID;
         imsg.isSupport = false;
 
         imsg.setContent(msg.content);

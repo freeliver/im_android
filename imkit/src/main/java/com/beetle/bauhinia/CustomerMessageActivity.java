@@ -140,7 +140,7 @@ public class CustomerMessageActivity extends MessageActivity
     }
 
     void checkMessageFailureFlag(IMessage msg) {
-        if (msg.sender == this.currentUID) {
+        if (msg.senderID == this.currentUID) {
             if (msg.content.getType() == IMessage.MessageType.MESSAGE_AUDIO) {
                 msg.setUploading(CustomerOutbox.getInstance().isUploading(msg));
             } else if (msg.content.getType() == IMessage.MessageType.MESSAGE_IMAGE) {
@@ -149,7 +149,7 @@ public class CustomerMessageActivity extends MessageActivity
             if (!msg.isAck() &&
                     !msg.isFailure() &&
                     !msg.getUploading() &&
-                    !IMService.getInstance().isCustomerMessageSending(msg.receiver, msg.msgLocalID)) {
+                    !IMService.getInstance().isCustomerMessageSending(msg.receiverID, msg.msgLocalID)) {
                 markMessageFailure(msg);
                 msg.setFailure(true);
             }
@@ -255,8 +255,6 @@ public class CustomerMessageActivity extends MessageActivity
         imsg.sellerID = msg.sellerID;
         imsg.isSupport = false;
         imsg.isOutgoing = false;
-        imsg.sender = msg.storeID;
-        imsg.receiver = msg.customerID;
         imsg.setContent(msg.content);
 
         if (!TextUtils.isEmpty(imsg.getUUID()) && findMessage(imsg.getUUID()) != null) {
@@ -282,8 +280,6 @@ public class CustomerMessageActivity extends MessageActivity
         imsg.storeID = msg.storeID;
         imsg.sellerID = msg.sellerID;
         imsg.isSupport = false;
-        imsg.sender = msg.customerID;
-        imsg.receiver = msg.storeID;
         imsg.setContent(msg.content);
 
         if (!TextUtils.isEmpty(imsg.getUUID()) && findMessage(imsg.getUUID()) != null) {
@@ -331,8 +327,6 @@ public class CustomerMessageActivity extends MessageActivity
         msg.sellerID = sellerID;
 
         msg.timestamp = now();
-        msg.sender = currentUID;
-        msg.receiver = storeID;
 
         msg.isSupport = false;
         msg.isOutgoing = true;
@@ -400,8 +394,8 @@ public class CustomerMessageActivity extends MessageActivity
     void saveMessageAttachment(IMessage msg, String address) {
         ICustomerMessage attachment = new ICustomerMessage();
         attachment.content = IMessage.newAttachment(msg.msgLocalID, address);
-        attachment.sender = msg.sender;
-        attachment.receiver = msg.receiver;
+        attachment.senderID = msg.senderID;
+        attachment.receiverID = msg.receiverID;
         saveMessage(attachment);
     }
 

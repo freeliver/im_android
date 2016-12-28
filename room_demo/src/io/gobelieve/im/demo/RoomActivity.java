@@ -72,8 +72,8 @@ public class RoomActivity extends MessageActivity implements RoomMessageObserver
         final IMessage imsg = new IMessage();
         imsg.timestamp = now();
         imsg.msgLocalID = msgLocalID++;
-        imsg.sender = msg.sender;
-        imsg.receiver = msg.receiver;
+        imsg.senderID = msg.sender;
+        imsg.receiverID = msg.receiver;
         imsg.setContent(msg.content);
         insertMessage(imsg);
     }
@@ -96,8 +96,8 @@ public class RoomActivity extends MessageActivity implements RoomMessageObserver
 
     boolean sendRoomMessage(IMessage imsg) {
         RoomMessage rm = new RoomMessage();
-        rm.sender = imsg.sender;
-        rm.receiver = imsg.receiver;
+        rm.sender = imsg.senderID;
+        rm.receiver = imsg.receiverID;
         rm.content = imsg.content.getRaw();
         IMService im = IMService.getInstance();
         return im.sendRoomMessage(rm);
@@ -109,8 +109,8 @@ public class RoomActivity extends MessageActivity implements RoomMessageObserver
         }
 
         IMessage imsg = new IMessage();
-        imsg.sender = this.currentUID;
-        imsg.receiver = this.roomID;
+        imsg.senderID = this.currentUID;
+        imsg.receiverID = this.roomID;
         imsg.setContent(IMessage.newText(text));
         imsg.timestamp = now();
         imsg.isOutgoing = true;

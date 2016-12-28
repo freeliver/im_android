@@ -138,7 +138,7 @@ public class GroupMessageActivity extends MessageActivity implements
                 attachments.put(attachment.msg_id, attachment);
             } else {
                 updateNotificationDesc(msg);
-                msg.isOutgoing = (msg.sender == currentUID);
+                msg.isOutgoing = (msg.senderID == currentUID);
                 messages.add(0, msg);
                 if (++count >= PAGE_SIZE) {
                     break;
@@ -198,7 +198,7 @@ public class GroupMessageActivity extends MessageActivity implements
                 attachments.put(attachment.msg_id, attachment);
             } else {
                 updateNotificationDesc(msg);
-                msg.isOutgoing = (msg.sender == currentUID);
+                msg.isOutgoing = (msg.senderID == currentUID);
                 messages.add(0, msg);
                 if (++count >= PAGE_SIZE) {
                     break;
@@ -239,8 +239,10 @@ public class GroupMessageActivity extends MessageActivity implements
         final IMessage imsg = new IMessage();
         imsg.timestamp = msg.timestamp;
         imsg.msgLocalID = msg.msgLocalID;
-        imsg.sender = msg.sender;
-        imsg.receiver = msg.receiver;
+        imsg.senderAppID = msg.getSenderAppID();
+        imsg.receiverAppID = msg.getReceiverAppID();
+        imsg.senderID = msg.getSenderID();
+        imsg.receiverID = msg.getReceiverID();
         imsg.setContent(msg.content);
         imsg.isOutgoing = (msg.sender == this.currentUID);
 
@@ -293,8 +295,10 @@ public class GroupMessageActivity extends MessageActivity implements
         }
 
         IMessage imsg = new IMessage();
-        imsg.sender = 0;
-        imsg.receiver = groupID;
+        imsg.senderAppID = 0;
+        imsg.receiverAppID = 0;
+        imsg.senderID = 0;
+        imsg.receiverID = groupID;
         imsg.timestamp = notification.timestamp;
         imsg.setContent(notification);
 
@@ -358,7 +362,7 @@ public class GroupMessageActivity extends MessageActivity implements
 
 
     void checkMessageFailureFlag(IMessage msg) {
-        if (msg.sender == this.currentUID) {
+        if (msg.senderID == this.currentUID) {
             if (msg.content.getType() == IMessage.MessageType.MESSAGE_AUDIO) {
                 msg.setUploading(GroupOutbox.getInstance().isUploading(msg));
             } else if (msg.content.getType() == IMessage.MessageType.MESSAGE_IMAGE) {
@@ -384,8 +388,11 @@ public class GroupMessageActivity extends MessageActivity implements
     @Override
     protected void sendMessageContent(IMessage.MessageContent content) {
         IMessage imsg = new IMessage();
-        imsg.sender = this.sender;
-        imsg.receiver = this.receiver;
+        //todo assign appid
+        imsg.senderAppID = 0;
+        imsg.receiverAppID = 0;
+        imsg.senderID = this.sender;
+        imsg.receiverID = this.receiver;
         imsg.setContent(content);
         imsg.timestamp = now();
         imsg.isOutgoing = true;
@@ -431,8 +438,8 @@ public class GroupMessageActivity extends MessageActivity implements
             GroupOutbox.getInstance().uploadImage(imsg, path);
         } else {
             IMMessage msg = new IMMessage();
-            msg.sender = imsg.sender;
-            msg.receiver = imsg.receiver;
+            msg.sender = imsg.getSender();
+            msg.receiver = imsg.getReceiver();
             msg.content = imsg.content.getRaw();
             msg.msgLocalID = imsg.msgLocalID;
             IMService im = IMService.getInstance();
@@ -444,36 +451,38 @@ public class GroupMessageActivity extends MessageActivity implements
     void saveMessageAttachment(IMessage msg, String address) {
         IMessage attachment = new IMessage();
         attachment.content = IMessage.newAttachment(msg.msgLocalID, address);
-        attachment.sender = msg.sender;
-        attachment.receiver = msg.receiver;
+        attachment.senderAppID = msg.senderAppID;
+        attachment.senderID = msg.senderID;
+        attachment.receiverAppID = msg.receiverAppID;
+        attachment.receiverID = msg.receiverID;
         saveMessage(attachment);
     }
 
     void saveMessage(IMessage imsg) {
-        GroupMessageDB.getInstance().insertMessage(imsg, imsg.receiver);
+        GroupMessageDB.getInstance().insertMessage(imsg, imsg.getReceiver());
     }
 
     @Override
     protected void markMessageListened(IMessage imsg) {
-        GroupMessageDB.getInstance().markMessageListened(imsg.msgLocalID, imsg.receiver);
+        GroupMessageDB.getInstance().markMessageListened(imsg.msgLocalID, imsg.getReceiver());
     }
 
     void markMessageFailure(IMessage imsg) {
         long cid = 0;
-        if (imsg.sender == this.currentUID) {
-            cid = imsg.receiver;
+        if (imsg.senderID == this.currentUID) {
+            cid = imsg.getReceiver();
         } else {
-            cid = imsg.sender;
+            cid = imsg.getSender();
         }
         GroupMessageDB.getInstance().markMessageFailure(imsg.msgLocalID, cid);
     }
 
     void eraseMessageFailure(IMessage imsg) {
         long cid = 0;
-        if (imsg.sender == this.currentUID) {
-            cid = imsg.receiver;
+        if (imsg.senderID == this.currentUID) {
+            cid = imsg.getReceiver();
         } else {
-            cid = imsg.sender;
+            cid = imsg.getSender();
         }
         GroupMessageDB.getInstance().eraseMessageFailure(imsg.msgLocalID, cid);
     }
@@ -491,7 +500,7 @@ public class GroupMessageActivity extends MessageActivity implements
     @Override
     public void onAudioUploadSuccess(IMessage msg, String url) {
         Log.i(TAG, "audio upload success:" + url);
-        if (msg.receiver == this.groupID) {
+        if (msg.receiverID == this.groupID) {
             IMessage m = findMessage(msg.msgLocalID);
             if (m != null) {
                 m.setUploading(false);
@@ -502,7 +511,7 @@ public class GroupMessageActivity extends MessageActivity implements
     @Override
     public void onAudioUploadFail(IMessage msg) {
         Log.i(TAG, "audio upload fail");
-        if (msg.receiver == this.groupID) {
+        if (msg.receiverID == this.groupID) {
             IMessage m = findMessage(msg.msgLocalID);
             if (m != null) {
                 m.setFailure(true);
@@ -514,7 +523,7 @@ public class GroupMessageActivity extends MessageActivity implements
     @Override
     public void onImageUploadSuccess(IMessage msg, String url) {
         Log.i(TAG, "image upload success:" + url);
-        if (msg.receiver == this.groupID) {
+        if (msg.receiverID == this.groupID) {
             IMessage m = findMessage(msg.msgLocalID);
             if (m != null) {
                 m.setUploading(false);
@@ -525,7 +534,7 @@ public class GroupMessageActivity extends MessageActivity implements
     @Override
     public void onImageUploadFail(IMessage msg) {
         Log.i(TAG, "image upload fail");
-        if (msg.receiver == this.groupID) {
+        if (msg.receiverID == this.groupID) {
             IMessage m = findMessage(msg.msgLocalID);
             if (m != null) {
                 m.setFailure(true);

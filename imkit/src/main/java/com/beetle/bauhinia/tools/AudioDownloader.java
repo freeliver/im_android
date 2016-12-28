@@ -42,8 +42,8 @@ public class AudioDownloader {
 
     public boolean isDownloading(IMessage msg) {
         for(IMessage m : messages) {
-            if (m.sender == msg.sender &&
-                m.receiver == msg.receiver &&
+            if (m.getSender() == msg.getSender() &&
+                m.getReceiver() == msg.getReceiver() &&
                 m.msgLocalID == msg.msgLocalID) {
                 return true;
             }

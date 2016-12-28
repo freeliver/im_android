@@ -16,8 +16,10 @@ public class PeerMessageHandler implements com.beetle.im.PeerMessageHandler {
         PeerMessageDB db = PeerMessageDB.getInstance();
         IMessage imsg = new IMessage();
         imsg.timestamp = msg.timestamp;
-        imsg.sender = msg.sender;
-        imsg.receiver = msg.receiver;
+        imsg.senderAppID = msg.getSenderAppID();
+        imsg.senderID = msg.getSenderID();
+        imsg.receiverAppID = msg.getReceiverAppID();
+        imsg.receiverID = msg.getReceiverID();
         imsg.setContent(msg.content);
         boolean r = db.insertMessage(imsg, uid);
         msg.msgLocalID = imsg.msgLocalID;

@@ -212,13 +212,7 @@ public class CustomerMessageDB extends MessageDB {
             msg.isSupport = (int)(buf[pos]) == 1 ? true : false;
             pos += 1;
 
-            if (msg.isSupport) {
-                msg.sender = msg.storeID;
-                msg.receiver = msg.customerID;
-            } else {
-                msg.sender = msg.customerID;
-                msg.receiver = msg.storeID;
-            }
+
 
             msg.setContent(new String(buf, pos, len - 41, "UTF-8"));
             return msg;

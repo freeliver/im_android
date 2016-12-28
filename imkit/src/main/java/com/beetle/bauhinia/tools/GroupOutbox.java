@@ -28,8 +28,8 @@ public class GroupOutbox extends Outbox{
     @Override
     protected void sendImageMessage(IMessage imsg, String url) {
         IMMessage msg = new IMMessage();
-        msg.sender = imsg.sender;
-        msg.receiver = imsg.receiver;
+        msg.sender = imsg.getSender();
+        msg.receiver = imsg.getReceiver();
 
         IMessage.Image image = (IMessage.Image)imsg.content;
         msg.content = IMessage.newImage(url, image.width, image.height, image.getUUID()).getRaw();
@@ -44,8 +44,8 @@ public class GroupOutbox extends Outbox{
         IMessage.Audio audio = (IMessage.Audio)imsg.content;
 
         IMMessage msg = new IMMessage();
-        msg.sender = imsg.sender;
-        msg.receiver = imsg.receiver;
+        msg.sender = imsg.getSender();
+        msg.receiver = imsg.getReceiver();
         msg.msgLocalID = imsg.msgLocalID;
         msg.content = IMessage.newAudio(url, audio.duration, audio.getUUID()).getRaw();
 
@@ -55,7 +55,7 @@ public class GroupOutbox extends Outbox{
 
     @Override
     protected void markMessageFailure(IMessage msg) {
-        GroupMessageDB.getInstance().markMessageFailure(msg.msgLocalID, msg.receiver);
+        GroupMessageDB.getInstance().markMessageFailure(msg.msgLocalID, msg.getReceiver());
     }
 
 }
