@@ -36,6 +36,7 @@ public class GroupMessageHandler implements com.beetle.im.GroupMessageHandler {
     public boolean handleMessage(IMMessage msg) {
         GroupMessageDB db = GroupMessageDB.getInstance();
         IMessage imsg = new IMessage();
+        imsg.senderAppID = msg.getSenderAppID();
         imsg.senderID = msg.getSenderID();
         imsg.receiverID = msg.getReceiverID();
         imsg.timestamp = msg.timestamp;
