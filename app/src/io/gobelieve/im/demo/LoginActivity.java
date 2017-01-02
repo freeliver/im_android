@@ -177,7 +177,10 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
             HttpClient getClient = new DefaultHttpClient();
             HttpPost request = new HttpPost(uri);
             JSONObject json = new JSONObject();
-            json.put("uid", uid);
+
+            long appid = 7;
+            long id = appid << 56 | uid;
+            json.put("uid", id);
             int PLATFORM_ANDROID = 2;
             String androidID = Settings.Secure.getString(this.getContentResolver(),
                     Settings.Secure.ANDROID_ID);
