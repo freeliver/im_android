@@ -23,7 +23,7 @@ import static android.os.SystemClock.uptimeMillis;
 public class IMService {
 
     private final String HOST = "imnode2.gobelieve.io";
-    private final int PORT = 23000;
+    private final int PORT = 24430;
 
     public enum ConnectState {
         STATE_UNCONNECTED,
