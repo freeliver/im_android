@@ -3,7 +3,8 @@ package com.beetle.im;
 
 import android.os.AsyncTask;
 import android.util.Log;
-import com.beetle.AsyncTCP;
+
+import com.beetle.AsyncSSLTCP;
 import com.beetle.TCPConnectCallback;
 import com.beetle.TCPReadCallback;
 
@@ -34,7 +35,7 @@ public class IMService {
 
     private final String TAG = "imservice";
     private final int HEARTBEAT = 60*3;
-    private AsyncTCP tcp;
+    private AsyncSSLTCP tcp;
     private boolean stopped = true;
     private boolean suspended = true;
     private boolean reachable = true;
@@ -605,7 +606,7 @@ public class IMService {
         this.pingTimestamp = 0;
         this.connectState = ConnectState.STATE_CONNECTING;
         IMService.this.publishConnectState();
-        this.tcp = new AsyncTCP();
+        this.tcp = new AsyncSSLTCP();
         Log.i(TAG, "new tcp...");
 
         this.tcp.setConnectCallback(new TCPConnectCallback() {
